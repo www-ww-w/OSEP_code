@@ -135,7 +135,7 @@ namespace PrintSpooferNet
 
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: PrintSpooferNet.exe pipename\ne.g. PrintSpooferNet.exe \\\\.\\pipe\\test\\pipe\\spoolss\nSpoolSample_x64.exe appsrv01 appsrv01/pipe/test\nPrintSpooferNet.exe \\\\.\\pipe\\test");
+                Console.WriteLine("Usage: PrintSpooferNet.exe pipename\ne.g. \n\tPrintSpooferNet.exe \\\\.\\pipe\\test\\pipe\\spoolss\n\tSpoolSample_x64.exe appsrv01 appsrv01/pipe/test\n\tPrintSpooferNet.exe \\\\.\\pipe\\test");
                 return;
             }
             string pipeName = args[0];
